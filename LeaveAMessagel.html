@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vault for se0ul</title>
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0b0b0b;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+  transition: background 0.8s ease;
+}
+
+.box {
+  width: 100%;
+  max-width: 420px;
+  background: rgba(20,20,20,0.6);
+  backdrop-filter: blur(10px);
+  padding: 22px;
+  border-radius: 14px;
+}
+
+/* MESSAGE */
+textarea, input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 10px;
+  color: white;
+}
+
+button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 11px;
+  border: none;
+  border-radius: 10px;
+  background: white;
+  color: black;
+  font-weight: bold;
+}
+
+/* PLAYER */
+.music-bar {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(30,30,30,0.7);
+  padding: 10px;
+  border-radius: 12px;
+}
+
+.cover {
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.track-info {
+  flex: 1;
+  text-align: left;
+}
+
+.track-name {
+  font-size: 13px;
+}
+
+.track-status {
+  font-size: 11px;
+  opacity: 0.7;
+}
+
+.controls {
+  display: flex;
+  gap: 6px;
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: white;
+}
+
+.icon-btn svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
+}
+
+/* progress */
+.progress-container {
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  margin-top: 6px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.progress {
+  height: 4px;
+  width: 0%;
+  background: white;
+}
+
+/* toast */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: black;
+  padding: 10px 14px;
+  border-radius: 10px;
+  opacity: 0;
+  transition: 0.3s;
+}
+
+.toast.show {
+  opacity: 1;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h2>Leave a Message</h2>
+
+<textarea id="msg"></textarea>
+<input id="name" placeholder="Name (optional)">
+<button onclick="send()">Send</button>
+
+<!-- PLAYER -->
+<div class="music-bar">
+
+  <div class="cover" onclick="openArtist()">
+    <img id="cover">
+  </div>
+
+  <div class="track-info">
+    <div class="track-name" id="title">Song</div>
+    <div class="track-status" id="status">Ready</div>
+
+    <div class="progress-container" onclick="seek(event)">
+      <div class="progress" id="prog"></div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button onclick="prev()">⏮</button>
+    <button onclick="toggle()" id="btn">▶</button>
+    <button onclick="next()">⏭</button>
+  </div>
+
+</div>
+
+<audio id="audio"></audio>
+
+</div>
+
+<div id="toast" class="toast">Sent</div>
+
+<script>
+
+/* 🎵 SONGS */
+const songs = [
+  {
+    name: "Song 1",
+    src: "songs/1.mp3",
+    cover: "covers/1.jpg",
+    artist: "https://example.com",
+    theme: "#1e1e2f"
+  },
+  {
+    name: "Song 2",
+    src: "songs/2.mp3",
+    cover: "covers/2.jpg",
+    artist: "https://example.com",
+    theme: "#2a1f3d"
+  }
+];
+
+let i = 0;
+let sent = sessionStorage.getItem("sent") === "true";
+
+const audio = document.getElementById("audio");
+
+/* THEME */
+function theme(c) {
+  document.body.style.background = c;
+}
+
+/* LOAD */
+function load(x, play=true){
+  i = x;
+  let s = songs[i];
+
+  audio.src = s.src;
+  document.getElementById("title").innerText = s.name;
+  document.getElementById("cover").src = s.cover;
+
+  theme(s.theme);
+
+  if(play){
+    audio.play();
+    document.getElementById("btn").innerText = "⏸";
+  }
+}
+
+/* PLAY */
+function toggle(){
+  if(audio.paused){
+    audio.play();
+    document.getElementById("btn").innerText = "⏸";
+  } else {
+    audio.pause();
+    document.getElementById("btn").innerText = "▶";
+  }
+}
+
+/* NAV */
+function next(){ load((i+1)%songs.length); }
+function prev(){ load((i-1+songs.length)%songs.length); }
+
+/* PROGRESS */
+audio.ontimeupdate = () => {
+  document.getElementById("prog").style.width =
+    (audio.currentTime/audio.duration)*100 + "%";
+};
+
+function seek(e){
+  let x = e.offsetX / e.target.clientWidth;
+  audio.currentTime = x * audio.duration;
+}
+
+/* ARTIST */
+function openArtist(){
+  window.open(songs[i].artist, "_blank");
+}
+
+/* TOAST */
+function toast(t){
+  let el = document.getElementById("toast");
+  el.innerText = t;
+  el.classList.add("show");
+  setTimeout(()=>el.classList.remove("show"),2000);
+}
+
+/* MESSAGE + ANTI SPAM */
+function send(){
+  if(sent){
+    toast("Already sent in this tab");
+    return;
+  }
+
+  let m = document.getElementById("msg").value;
+  let n = document.getElementById("name").value;
+
+  if(!m.trim()) return toast("Write something");
+
+  sent = true;
+  sessionStorage.setItem("sent","true");
+
+  // 🔥 FIREBASE PLACEHOLDER (next step)
+  console.log({m,n});
+
+  toast("Message sent");
+  document.getElementById("msg").value="";
+}
+
+/* INIT */
+load(0,false);
+
+</script>
+
+</body>
+</html>
