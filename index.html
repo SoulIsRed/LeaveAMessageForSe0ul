@@ -21,7 +21,6 @@ body {
   transition: background 0.8s ease;
 }
 
-/* OVERLAY */
 .overlay {
   position: fixed;
   inset: 0;
@@ -30,7 +29,6 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 9999;
-  transition: opacity 0.3s ease;
 }
 
 .overlay-content {
@@ -38,7 +36,6 @@ body {
   opacity: 0.8;
 }
 
-/* BOX */
 .box {
   width: 100%;
   max-width: 420px;
@@ -48,15 +45,6 @@ body {
   border-radius: 14px;
 }
 
-/* INTRO */
-.intro {
-  font-size: 12px;
-  color: #aaa;
-  margin-bottom: 14px;
-  line-height: 1.5;
-}
-
-/* INPUT */
 textarea, input {
   width: 100%;
   margin-top: 10px;
@@ -78,7 +66,6 @@ button {
   font-weight: bold;
 }
 
-/* PLAYER */
 .music-bar {
   margin-top: 18px;
   display: flex;
@@ -104,7 +91,6 @@ button {
 }
 
 .track-info { flex: 1; }
-.track-name { font-size: 13px; }
 
 .controls { display: flex; gap: 6px; }
 
@@ -122,9 +108,6 @@ button {
   background: white;
 }
 
-.volume { width: 70px; }
-
-/* TOAST */
 .toast {
   position: fixed;
   bottom: 20px;
@@ -153,12 +136,8 @@ button {
 <h2>Leave a Message for se0ul</h2>
 
 <p class="intro">
-Hey!! it’s me Jared / se0ul. As you may know, I’m leaving the Philippines to go to America.  
-To mark this new chapter, I made this website so you can leave me a message for me to read once I’m there.
-
-I’ll save the ones I really love—and if you include your name, I might blur it out depending on what you want.
-
-(pls do it fr)
+Hey!! it’s me Jared / se0ul. I’m leaving the Philippines to go to America.
+Leave a message for me here :)
 </p>
 
 <textarea id="msg" placeholder="Write something..."></textarea>
@@ -173,7 +152,7 @@ I’ll save the ones I really love—and if you include your name, I might blur 
   </div>
 
   <div class="track-info">
-    <div class="track-name" id="title">Song</div>
+    <div id="title">Song</div>
 
     <div class="progress-container" onclick="seek(event)">
       <div class="progress" id="prog"></div>
@@ -186,9 +165,6 @@ I’ll save the ones I really love—and if you include your name, I might blur 
     <button onclick="next()">⏭</button>
   </div>
 
-  <input class="volume" type="range" min="0" max="1" step="0.01"
-    onchange="setVolume(this.value)">
-
 </div>
 
 <audio id="audio"></audio>
@@ -200,65 +176,65 @@ I’ll save the ones I really love—and if you include your name, I might blur 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
-
-/* 🌐 SUPABASE (INSTANT INIT — FIXED) */
-let supabase = null;
-
-function initSupabase() {
-  if (!window.supabase) {
-    console.warn("Supabase library not loaded yet");
-    return;
-  }
-
-  try {
-    supabase = window.supabase.createClient(
-      "https://kbbapvcsftcrdvvobbju.supabase.co",
-      "sb_publishable_0wWs2IDtWSuAIIGwKyA3dw_Mn8zeubq"
-    );
-
-    console.log("Supabase ready");
-  } catch (e) {
-    console.error("Supabase init failed:", e);
-  }
-}
-
-/* run safely after everything loads */
-window.addEventListener("load", initSupabase);
-/* 🎵 SONGS */
+/* =========================
+   SONGS
+========================= */
 const songs = [
   {
     name: "Home",
     src: "songs/song1.mp3",
     cover: "covers/cover1.jpg",
-    artist: "https://open.spotify.com/track/7ut2M0v822jWa5EwXZWLem",
+    artist: "https://open.spotify.com",
     theme: "#f8edad"
   },
   {
     name: "what can i do?",
     src: "songs/song2.mp3",
     cover: "covers/cover2.jpg",
-    artist: "https://open.spotify.com/album/6CnoR4VpXv5eRTyG0bdQcb",
+    artist: "https://open.spotify.com",
     theme: "#4e533f"
   },
   {
     name: "Coffee",
     src: "songs/song3.mp3",
     cover: "covers/cover3.jpg",
-    artist: "https://open.spotify.com/track/2zCO8w8puVE1frDRpCBLuD",
+    artist: "https://open.spotify.com",
     theme: "#93461c"
   }
 ];
 
 let i = 0;
 let sent = sessionStorage.getItem("sent") === "true";
-const audio = document.getElementById("audio");
 
-/* AUTO NEXT */
-audio.addEventListener("ended", next);
+let supabase = null;
+let audio;
 
-/* 🚀 FIXED START (NO STUCK OVERLAY) */
+/* =========================
+   SAFE INIT (IMPORTANT)
+========================= */
+window.addEventListener("DOMContentLoaded", () => {
+
+  audio = document.getElementById("audio");
+
+  /* SUPABASE INIT */
+  try {
+    supabase = window.supabase?.createClient(
+      "https://kbbapvcsftcrdvvobbju.supabase.co",
+      "sb_publishable_0wWs2IDtWSuAIIGwKyA3dw_Mn8zeubq"
+    );
+  } catch (e) {
+    console.log("Supabase error", e);
+  }
+
+  audio.addEventListener("ended", next);
+
+  load(0, false);
+});
+
+/* =========================
+   START EXPERIENCE (FIXED)
+========================= */
 window.startExperience = function () {
-
   const overlay = document.getElementById("overlay");
 
   overlay.style.opacity = "0";
@@ -270,11 +246,12 @@ window.startExperience = function () {
   }, 200);
 };
 
-/* LOAD */
+/* =========================
+   MUSIC
+========================= */
 function load(x, play=true){
   i = x;
   let s = songs[i];
-  if(!s) return;
 
   audio.src = s.src;
   document.getElementById("title").innerText = s.name;
@@ -287,7 +264,6 @@ function load(x, play=true){
   }
 }
 
-/* PLAYER */
 function toggle(){
   if(audio.paused){
     audio.play();
@@ -301,29 +277,18 @@ function toggle(){
 function next(){ load((i+1)%songs.length); }
 function prev(){ load((i-1+songs.length)%songs.length); }
 
-/* PROGRESS */
-audio.ontimeupdate = () => {
-  if(!audio.duration) return;
-  document.getElementById("prog").style.width =
-    (audio.currentTime/audio.duration)*100 + "%";
-};
-
 function seek(e){
   let x = e.offsetX / e.target.clientWidth;
   audio.currentTime = x * audio.duration;
 }
 
-/* VOLUME */
-function setVolume(v){
-  audio.volume = v;
-}
-
-/* ARTIST */
 function openArtist(){
   window.open(songs[i].artist, "_blank");
 }
 
-/* TOAST */
+/* =========================
+   TOAST
+========================= */
 function toast(t){
   let el = document.getElementById("toast");
   el.innerText = t;
@@ -331,15 +296,17 @@ function toast(t){
   setTimeout(()=>el.classList.remove("show"),2000);
 }
 
-/* SEND MESSAGE */
+/* =========================
+   SEND MESSAGE
+========================= */
 async function send(){
-  if(sent) return toast("Already sent in this tab");
+  if(sent) return toast("Already sent");
 
   let m = document.getElementById("msg").value;
   let n = document.getElementById("name").value;
 
   if(!m.trim()) return toast("Write something");
-  if(!supabase) return toast("Loading database...");
+  if(!supabase) return toast("Loading...");
 
   const { error } = await supabase.from("messages").insert([
     {
@@ -362,9 +329,6 @@ async function send(){
   document.getElementById("msg").value="";
   document.getElementById("name").value="";
 }
-
-/* INIT */
-load(0,false);
 
 </script>
 
