@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Vault for se0ul</title>
+<title>Leave a Message for se0ul</title>
 
 <style>
 * { box-sizing: border-box; }
@@ -30,7 +30,15 @@ body {
   border-radius: 14px;
 }
 
-/* MESSAGE */
+/* INTRO */
+.intro {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 14px;
+  line-height: 1.5;
+}
+
+/* INPUT */
 textarea, input {
   width: 100%;
   margin-top: 10px;
@@ -79,22 +87,12 @@ button {
 
 .track-info {
   flex: 1;
-  text-align: left;
 }
 
-.track-name {
-  font-size: 13px;
-}
+.track-name { font-size: 13px; }
+.track-status { font-size: 11px; opacity: 0.7; }
 
-.track-status {
-  font-size: 11px;
-  opacity: 0.7;
-}
-
-.controls {
-  display: flex;
-  gap: 6px;
-}
+.controls { display: flex; gap: 6px; }
 
 .icon-btn {
   background: transparent;
@@ -124,6 +122,11 @@ button {
   background: white;
 }
 
+/* volume */
+.volume {
+  width: 70px;
+}
+
 /* toast */
 .toast {
   position: fixed;
@@ -137,9 +140,7 @@ button {
   transition: 0.3s;
 }
 
-.toast.show {
-  opacity: 1;
-}
+.toast.show { opacity: 1; }
 
 </style>
 </head>
@@ -148,9 +149,18 @@ button {
 
 <div class="box">
 
-<h2>Leave a Message</h2>
+<h2>Leave a Message for se0ul</h2>
 
-<textarea id="msg"></textarea>
+<p class="intro">
+  Hey!! it’s me Jared / se0ul. As you may know, I’m leaving the Philippines to go to America.  
+  To mark this new chapter, I made this website so you can leave me a message for me to read once I’m there.
+
+  I’ll save the ones I really love—and if you include your name, I might blur it out depending on what you want.
+
+  (pls do it fr)
+</p>
+
+<textarea id="msg" placeholder="Write something..."></textarea>
 <input id="name" placeholder="Name (optional)">
 <button onclick="send()">Send</button>
 
@@ -176,6 +186,9 @@ button {
     <button onclick="next()">⏭</button>
   </div>
 
+  <input class="volume" type="range" min="0" max="1" step="0.01"
+    onchange="setVolume(this.value)">
+
 </div>
 
 <audio id="audio"></audio>
@@ -190,15 +203,15 @@ button {
 const songs = [
   {
     name: "Song 1",
-    src: "songs/1.mp3",
-    cover: "covers/1.jpg",
+    src: "songs/song1.mp3",
+    cover: "covers/song1.jpg",
     artist: "https://example.com",
     theme: "#1e1e2f"
   },
   {
     name: "Song 2",
-    src: "songs/2.mp3",
-    cover: "covers/2.jpg",
+    src: "songs/song2.mp3",
+    cover: "covers/song2.jpg",
     artist: "https://example.com",
     theme: "#2a1f3d"
   }
@@ -257,6 +270,11 @@ function seek(e){
   audio.currentTime = x * audio.duration;
 }
 
+/* VOLUME */
+function setVolume(v){
+  audio.volume = v;
+}
+
 /* ARTIST */
 function openArtist(){
   window.open(songs[i].artist, "_blank");
@@ -270,7 +288,7 @@ function toast(t){
   setTimeout(()=>el.classList.remove("show"),2000);
 }
 
-/* MESSAGE + ANTI SPAM */
+/* MESSAGE */
 function send(){
   if(sent){
     toast("Already sent in this tab");
@@ -285,11 +303,11 @@ function send(){
   sent = true;
   sessionStorage.setItem("sent","true");
 
-  // 🔥 FIREBASE PLACEHOLDER (next step)
-  console.log({m,n});
+  console.log({m,n}); // firebase later
 
   toast("Message sent");
   document.getElementById("msg").value="";
+  document.getElementById("name").value="";
 }
 
 /* INIT */
