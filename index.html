@@ -176,6 +176,22 @@ Leave a message for me here :)
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
+
+/* =========================
+   START EXPERIENCE (FIXED)
+========================= */
+window.startExperience = function () {
+  const overlay = document.getElementById("overlay");
+
+  overlay.style.opacity = "0";
+  overlay.style.pointerEvents = "none";
+
+  setTimeout(() => {
+    overlay.style.display = "none";
+    load(0, true);
+  }, 200);
+};
+  
 /* =========================
    SONGS
 ========================= */
@@ -231,20 +247,6 @@ window.addEventListener("DOMContentLoaded", () => {
   load(0, false);
 });
 
-/* =========================
-   START EXPERIENCE (FIXED)
-========================= */
-window.startExperience = function () {
-  const overlay = document.getElementById("overlay");
-
-  overlay.style.opacity = "0";
-  overlay.style.pointerEvents = "none";
-
-  setTimeout(() => {
-    overlay.style.display = "none";
-    load(0, true);
-  }, 200);
-};
 
 /* =========================
    MUSIC
