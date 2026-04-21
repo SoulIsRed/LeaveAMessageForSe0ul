@@ -248,7 +248,8 @@ const audio = document.getElementById("audio");
 audio.addEventListener("ended", next);
 
 /* 🚀 FIXED START (NO STUCK OVERLAY) */
-function startExperience() {
+window.startExperience = function () {
+
   const overlay = document.getElementById("overlay");
 
   overlay.style.opacity = "0";
@@ -258,7 +259,7 @@ function startExperience() {
     overlay.style.display = "none";
     load(0, true);
   }, 200);
-}
+};
 
 /* LOAD */
 function load(x, play=true){
