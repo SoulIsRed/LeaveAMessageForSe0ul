@@ -201,7 +201,15 @@ button {
 
 <div id="toast" class="toast"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+
+  /* 🌐 SUPABASE INIT */
+const supabaseUrl = "https://kbbapvcsftcrdvvobbju.supabase.co";
+const supabaseKey = "sb_publishable_0wWs2IDtWSuAIIGwKyA3dw_Mn8zeubq";
+
+const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 /* 🎵 SONGS */
 const songs = [
@@ -281,8 +289,9 @@ function prev(){ load((i-1+songs.length)%songs.length); }
 
 /* PROGRESS */
 audio.ontimeupdate = () => {
+  if (!audio.duration) return;
   document.getElementById("prog").style.width =
-    (audio.currentTime/audio.duration)*100 + "%";
+    (audio.currentTime / audio.duration) * 100 + "%";
 };
 
 function seek(e){
@@ -309,7 +318,7 @@ function toast(t){
 }
 
 /* MESSAGE */
-function send(){
+async function send(){
   if(sent){
     toast("Already sent in this tab");
     return;
@@ -320,18 +329,32 @@ function send(){
 
   if(!m.trim()) return toast("Write something");
 
+  const { error } = await supabase.from("messages").insert([
+    {
+      to: "se0ul",
+      message: m,
+      name: n || "Anonymous"
+    }
+  ]);
+
+  if(error){
+    console.log(error);
+    return toast("Error sending");
+  }
+
   sent = true;
   sessionStorage.setItem("sent","true");
 
-  console.log({m,n}); // Firebase next
-
   toast("Message sent");
+
   document.getElementById("msg").value="";
   document.getElementById("name").value="";
 }
 
 /* INIT */
 load(0,false);
+
+
 
 </script>
 
