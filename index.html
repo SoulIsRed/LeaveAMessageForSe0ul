@@ -202,19 +202,28 @@ I’ll save the ones I really love—and if you include your name, I might blur 
 <script>
 
 /* 🌐 SUPABASE (INSTANT INIT — FIXED) */
-let supabase;
+let supabase = null;
 
-(function initSupabase(){
+function initSupabase() {
+  if (!window.supabase) {
+    console.warn("Supabase library not loaded yet");
+    return;
+  }
+
   try {
     supabase = window.supabase.createClient(
       "https://kbbapvcsftcrdvvobbju.supabase.co",
       "sb_publishable_0wWs2IDtWSuAIIGwKyA3dw_Mn8zeubq"
     );
-  } catch (e) {
-    console.log("Supabase failed", e);
-  }
-})();
 
+    console.log("Supabase ready");
+  } catch (e) {
+    console.error("Supabase init failed:", e);
+  }
+}
+
+/* run safely after everything loads */
+window.addEventListener("load", initSupabase);
 /* 🎵 SONGS */
 const songs = [
   {
