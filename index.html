@@ -29,6 +29,7 @@ body {
   justify-content: center;
   align-items: center;
   z-index: 9999;
+  cursor: pointer;
 }
 
 .overlay-content {
@@ -120,14 +121,13 @@ button {
   transition: 0.3s;
 }
 .toast.show { opacity: 1; }
-
 </style>
 </head>
 
 <body>
 
 <!-- OVERLAY -->
-<div id="overlay" class="overlay" onclick="startExperience()">
+<div id="overlay" class="overlay">
   <div class="overlay-content">Tap to enter</div>
 </div>
 
@@ -137,17 +137,16 @@ button {
 
 <p class="intro">
 Hey!! it’s me Jared / se0ul. I’m leaving the Philippines to go to America.
-Leave a message for me here :)
+Leave a message for me :)
 </p>
 
 <textarea id="msg" placeholder="Write something..."></textarea>
 <input id="name" placeholder="Name (optional)">
 <button onclick="send()">Send</button>
 
-<!-- PLAYER -->
 <div class="music-bar">
 
-  <div class="cover" onclick="openArtist()">
+  <div class="cover">
     <img id="cover">
   </div>
 
@@ -178,7 +177,39 @@ Leave a message for me here :)
 <script>
 
 /* =========================
-   START EXPERIENCE (FIXED)
+   GLOBAL SAFE STATE
+========================= */
+let supabaseClient = null;
+let audio;
+let index = 0;
+let sent = sessionStorage.getItem("sent") === "true";
+
+/* =========================
+   SONGS
+========================= */
+const songs = [
+  {
+    name: "Home",
+    src: "songs/song1.mp3",
+    cover: "covers/cover1.jpg",
+    theme: "#f8edad"
+  },
+  {
+    name: "what can i do?",
+    src: "songs/song2.mp3",
+    cover: "covers/cover2.jpg",
+    theme: "#4e533f"
+  },
+  {
+    name: "Coffee",
+    src: "songs/song3.mp3",
+    cover: "covers/cover3.jpg",
+    theme: "#93461c"
+  }
+];
+
+/* =========================
+   START EXPERIENCE (SAFE)
 ========================= */
 window.startExperience = function () {
   const overlay = document.getElementById("overlay");
@@ -191,55 +222,22 @@ window.startExperience = function () {
     load(0, true);
   }, 200);
 };
-  
-/* =========================
-   SONGS
-========================= */
-const songs = [
-  {
-    name: "Home",
-    src: "songs/song1.mp3",
-    cover: "covers/cover1.jpg",
-    artist: "https://open.spotify.com",
-    theme: "#f8edad"
-  },
-  {
-    name: "what can i do?",
-    src: "songs/song2.mp3",
-    cover: "covers/cover2.jpg",
-    artist: "https://open.spotify.com",
-    theme: "#4e533f"
-  },
-  {
-    name: "Coffee",
-    src: "songs/song3.mp3",
-    cover: "covers/cover3.jpg",
-    artist: "https://open.spotify.com",
-    theme: "#93461c"
-  }
-];
-
-let i = 0;
-let sent = sessionStorage.getItem("sent") === "true";
-
-let supabase = null;
-let audio;
 
 /* =========================
-   SAFE INIT (IMPORTANT)
+   INIT EVERYTHING
 ========================= */
 window.addEventListener("DOMContentLoaded", () => {
 
   audio = document.getElementById("audio");
 
-  /* SUPABASE INIT */
+  /* SUPABASE SAFE INIT */
   try {
-    supabase = window.supabase?.createClient(
+    supabaseClient = window.supabase?.createClient(
       "https://kbbapvcsftcrdvvobbju.supabase.co",
       "sb_publishable_0wWs2IDtWSuAIIGwKyA3dw_Mn8zeubq"
     );
   } catch (e) {
-    console.log("Supabase error", e);
+    console.log("Supabase failed:", e);
   }
 
   audio.addEventListener("ended", next);
@@ -247,27 +245,26 @@ window.addEventListener("DOMContentLoaded", () => {
   load(0, false);
 });
 
-
 /* =========================
-   MUSIC
+   MUSIC SYSTEM
 ========================= */
-function load(x, play=true){
-  i = x;
-  let s = songs[i];
+function load(i, play = true) {
+  index = i;
+  const s = songs[index];
 
   audio.src = s.src;
   document.getElementById("title").innerText = s.name;
   document.getElementById("cover").src = s.cover;
   document.body.style.background = s.theme;
 
-  if(play){
-    audio.play().catch(()=>{});
+  if (play) {
+    audio.play().catch(() => {});
     document.getElementById("btn").innerText = "⏸";
   }
 }
 
-function toggle(){
-  if(audio.paused){
+function toggle() {
+  if (audio.paused) {
     audio.play();
     document.getElementById("btn").innerText = "⏸";
   } else {
@@ -276,41 +273,48 @@ function toggle(){
   }
 }
 
-function next(){ load((i+1)%songs.length); }
-function prev(){ load((i-1+songs.length)%songs.length); }
-
-function seek(e){
-  let x = e.offsetX / e.target.clientWidth;
-  audio.currentTime = x * audio.duration;
+function next() {
+  load((index + 1) % songs.length);
 }
 
-function openArtist(){
-  window.open(songs[i].artist, "_blank");
+function prev() {
+  load((index - 1 + songs.length) % songs.length);
+}
+
+audio.ontimeupdate = () => {
+  if (!audio.duration) return;
+  document.getElementById("prog").style.width =
+    (audio.currentTime / audio.duration) * 100 + "%";
+};
+
+function seek(e) {
+  let x = e.offsetX / e.target.clientWidth;
+  audio.currentTime = x * audio.duration;
 }
 
 /* =========================
    TOAST
 ========================= */
-function toast(t){
-  let el = document.getElementById("toast");
+function toast(t) {
+  const el = document.getElementById("toast");
   el.innerText = t;
   el.classList.add("show");
-  setTimeout(()=>el.classList.remove("show"),2000);
+  setTimeout(() => el.classList.remove("show"), 2000);
 }
 
 /* =========================
-   SEND MESSAGE
+   SEND MESSAGE (SUPABASE)
 ========================= */
-async function send(){
-  if(sent) return toast("Already sent");
+async function send() {
+  if (sent) return toast("Already sent");
 
-  let m = document.getElementById("msg").value;
-  let n = document.getElementById("name").value;
+  const m = document.getElementById("msg").value;
+  const n = document.getElementById("name").value;
 
-  if(!m.trim()) return toast("Write something");
-  if(!supabase) return toast("Loading...");
+  if (!m.trim()) return toast("Write something");
+  if (!supabaseClient) return toast("Database loading...");
 
-  const { error } = await supabase.from("messages").insert([
+  const { error } = await supabaseClient.from("messages").insert([
     {
       to: "se0ul",
       message: m,
@@ -318,18 +322,18 @@ async function send(){
     }
   ]);
 
-  if(error){
+  if (error) {
     console.log(error);
     return toast("Error sending");
   }
 
   sent = true;
-  sessionStorage.setItem("sent","true");
+  sessionStorage.setItem("sent", "true");
 
   toast("Message sent");
 
-  document.getElementById("msg").value="";
-  document.getElementById("name").value="";
+  document.getElementById("msg").value = "";
+  document.getElementById("name").value = "";
 }
 
 </script>
