@@ -329,12 +329,11 @@ async function send() {
   if (!supabaseClient) return toast("Database loading...");
 
   const { error } = await supabaseClient.from("messages").insert([
-    {
-      id: "se0ul",
-      message: m,
-      name: n || "Anonymous"
-    }
-  ]);
+  {
+    message: m,
+    name: n || "Anonymous"
+  }
+]);
 
   if (error) {
     console.log(error);
