@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Leave a Message for se0ul</title>
+<!-- FIX 3: Prevents favicon 404 -->
+<link rel="icon" href="data:,">
 
 <style>
 * { box-sizing: border-box; }
@@ -30,6 +32,7 @@ body {
   align-items: center;
   z-index: 9999;
   cursor: pointer;
+  transition: opacity 0.2s ease;
 }
 
 .overlay-content {
@@ -65,6 +68,7 @@ button {
   background: white;
   color: black;
   font-weight: bold;
+  cursor: pointer;
 }
 
 .music-bar {
@@ -83,6 +87,7 @@ button {
   border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .cover img {
@@ -94,6 +99,13 @@ button {
 .track-info { flex: 1; }
 
 .controls { display: flex; gap: 6px; }
+
+/* Make music control buttons smaller so they don't stretch */
+.controls button {
+  width: auto;
+  padding: 8px 10px;
+  margin-top: 0;
+}
 
 .progress-container {
   height: 4px;
@@ -107,6 +119,8 @@ button {
   height: 4px;
   width: 0%;
   background: white;
+  border-radius: 10px;
+  pointer-events: none;
 }
 
 .toast {
@@ -127,7 +141,8 @@ button {
 <body>
 
 <!-- OVERLAY -->
-<div id="overlay" class="overlay">
+<!-- FIX: Use onclick directly on the overlay div instead of a separate global function -->
+<div id="overlay" class="overlay" onclick="startExperience()">
   <div class="overlay-content">Tap to enter</div>
 </div>
 
@@ -136,7 +151,7 @@ button {
 <h2>Leave a Message for se0ul</h2>
 
 <p class="intro">
-Hey!! it’s me Jared / se0ul. I’m leaving the Philippines to go to America.
+Hey!! it's me Jared / se0ul. I'm leaving the Philippines to go to America.
 Leave a message for me :)
 </p>
 
@@ -147,12 +162,11 @@ Leave a message for me :)
 <div class="music-bar">
 
   <div class="cover">
-    <img id="cover">
+    <img id="cover" alt="cover">
   </div>
 
   <div class="track-info">
     <div id="title">Song</div>
-
     <div class="progress-container" onclick="seek(event)">
       <div class="progress" id="prog"></div>
     </div>
@@ -213,10 +227,8 @@ const songs = [
 ========================= */
 window.startExperience = function () {
   const overlay = document.getElementById("overlay");
-
   overlay.style.opacity = "0";
   overlay.style.pointerEvents = "none";
-
   setTimeout(() => {
     overlay.style.display = "none";
     load(0, true);
@@ -241,6 +253,13 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   audio.addEventListener("ended", next);
+
+  // ✅ FIX 1: ontimeupdate moved INSIDE DOMContentLoaded so `audio` is defined
+  audio.ontimeupdate = () => {
+    if (!audio.duration) return;
+    document.getElementById("prog").style.width =
+      (audio.currentTime / audio.duration) * 100 + "%";
+  };
 
   load(0, false);
 });
@@ -281,14 +300,9 @@ function prev() {
   load((index - 1 + songs.length) % songs.length);
 }
 
-audio.ontimeupdate = () => {
-  if (!audio.duration) return;
-  document.getElementById("prog").style.width =
-    (audio.currentTime / audio.duration) * 100 + "%";
-};
-
 function seek(e) {
-  let x = e.offsetX / e.target.clientWidth;
+  if (!audio.duration) return;
+  let x = e.offsetX / e.currentTarget.clientWidth;
   audio.currentTime = x * audio.duration;
 }
 
@@ -330,7 +344,7 @@ async function send() {
   sent = true;
   sessionStorage.setItem("sent", "true");
 
-  toast("Message sent");
+  toast("Message sent! 🤍");
 
   document.getElementById("msg").value = "";
   document.getElementById("name").value = "";
