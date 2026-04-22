@@ -330,7 +330,7 @@ async function send() {
 
   const { error } = await supabaseClient.from("messages").insert([
     {
-      to: "se0ul",
+      id: "se0ul",
       message: m,
       name: n || "Anonymous"
     }
